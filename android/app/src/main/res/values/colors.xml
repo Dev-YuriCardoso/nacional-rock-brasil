@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="rock_black">#0C0C0C</color>
+    <color name="rock_red">#F21D1D</color>
+    <color name="rock_orange">#F04B11</color>
+    <color name="white">#FFFFFF</color>
+</resources>
