@@ -1,0 +1,12 @@
+# Identificador local do projeto (usado só pela CLI do Supabase em desenvolvimento).
+# Para publicar: supabase link --project-ref <ID_DO_SEU_PROJETO>
+project_id = "nacional-rock-brasil"
+
+# As duas funções validam a chamada por conta própria (admin-setup confere o token e o papel
+# de admin dentro do código), então o gateway não precisa verificar o JWT.
+# Isso também evita erro 401 ao usar as chaves novas "sb_publishable_...".
+[functions.admin-setup]
+verify_jwt = false
+
+[functions.resolve-bandcamp]
+verify_jwt = false
