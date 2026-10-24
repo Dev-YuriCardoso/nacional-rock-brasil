@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { toEmbed, embedTypeToContentType } from "@/lib/embedUtils";
@@ -18,15 +17,19 @@ interface ContentItem {
 
 const BandDashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  // If admin is managing a specific band
+  // An admin role check is required before opening another band's dashboard.
   const adminBandId = searchParams.get("bandId");
-  const isAdminMode = !!adminBandId && isAdmin;
-  const targetId = isAdminMode ? adminBandId : user?.id;
+  const [adminAccessLoading, setAdminAccessLoading] = useState(!!adminBandId);
+  const [checkedAdminBandId, setCheckedAdminBandId] = useState<string | null>(null);
+  const [hasAdminAccess, setHasAdminAccess] = useState(false);
+  const isAdminMode = !!adminBandId && hasAdminAccess;
+  const targetId = adminBandId
+    ? (hasAdminAccess ? adminBandId : undefined)
+    : user?.id;
 
   const [bandName, setBandName] = useState("");
   const [bio, setBio] = useState("");
@@ -83,22 +86,56 @@ const BandDashboard = () => {
   const productCategories = ["Camisetas", "Vinil / CD", "Acessórios", "Instrumentos", "Outros"];
 
   useEffect(() => {
-    // Wait for both the session and the admin role check before redirecting.
-    // Otherwise an admin opening ?bandId=... can be sent back home while
-    // isAdmin is still false during its initial load.
-    if (authLoading || adminLoading) return;
+    if (authLoading) return;
+
+    if (!user || !adminBandId) {
+      setHasAdminAccess(false);
+      setAdminAccessLoading(false);
+      setCheckedAdminBandId(null);
+      return;
+    }
+
+    let cancelled = false;
+    setAdminAccessLoading(true);
+    setCheckedAdminBandId(null);
+
+    const checkAdminAccess = async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (cancelled) return;
+      setHasAdminAccess(!error && !!data);
+      setCheckedAdminBandId(adminBandId);
+      setAdminAccessLoading(false);
+    };
+
+    checkAdminAccess();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, user, adminBandId]);
+
+  useEffect(() => {
+    if (authLoading) return;
 
     if (!user) {
       navigate("/auth");
       return;
     }
 
-    if (adminBandId && !isAdmin && user.user_metadata?.user_type !== "banda") {
-      navigate("/");
-      return;
-    }
-
-    if (!adminBandId && user.user_metadata?.user_type !== "banda") {
+    if (adminBandId) {
+      // Do not redirect or load a target profile until this exact URL's
+      // administrator permission check has completed.
+      if (adminAccessLoading || checkedAdminBandId !== adminBandId) return;
+      if (!hasAdminAccess) {
+        navigate("/");
+        return;
+      }
+    } else if (user.user_metadata?.user_type !== "banda") {
       navigate("/");
       return;
     }
@@ -111,7 +148,7 @@ const BandDashboard = () => {
       loadPaymentRequests();
       loadSitePixKey();
     }
-  }, [authLoading, adminLoading, user, targetId, isAdmin, adminBandId]);
+  }, [authLoading, adminAccessLoading, checkedAdminBandId, hasAdminAccess, user, targetId, adminBandId]);
 
   const loadProfile = async () => {
     if (!targetId) return;
