@@ -15,12 +15,7 @@ export const newReleases = [
   { id: 6, title: "Gritos Silenciosos", artist: "Sombra", cover: albumCover2, genre: "Goth" },
 ];
 
-export const events = [
-  { id: 1, title: "Rock in Rio BR", date: "15 Mar 2026", location: "São Paulo, SP", image: eventVenue },
-  { id: 2, title: "Metal Open Air", date: "22 Abr 2026", location: "Curitiba, PR", image: eventVenue },
-  { id: 3, title: "Punk Underground Fest", date: "10 Mai 2026", location: "Porto Alegre, RS", image: eventVenue },
-  { id: 4, title: "Gothic Night", date: "05 Jun 2026", location: "Belo Horizonte, MG", image: eventVenue },
-];
+export const events: Array<{ id: number; title: string; date: string; location: string; image: string }> = [];
 
 export const artists = [
   { id: "infernus-br", name: "Infernus BR", genre: "Death Metal", avatar: artistAvatar, cover: artistCover, followers: "125K" },
