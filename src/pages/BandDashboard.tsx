@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -52,6 +52,7 @@ const BandDashboard = () => {
   const [eventCity, setEventCity] = useState("");
   const [eventUF, setEventUF] = useState("");
   const [eventImageFile, setEventImageFile] = useState<File | null>(null);
+  const eventImageInputRef = useRef<HTMLInputElement>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [savingEvent, setSavingEvent] = useState(false);
 
@@ -235,6 +236,7 @@ const BandDashboard = () => {
       setEventCity("");
       setEventUF("");
       setEventImageFile(null);
+      if (eventImageInputRef.current) eventImageInputRef.current.value = "";
       loadEvents();
       toast({ title: "Evento cadastrado!" });
     }
@@ -635,6 +637,7 @@ const BandDashboard = () => {
           <div>
             <label className="mb-1.5 block text-xs font-medium text-foreground">Capa do evento * (obrigatória)</label>
             <input
+              ref={eventImageInputRef}
               type="file"
               accept="image/*"
               required
