@@ -18,7 +18,7 @@ interface ContentItem {
   url: string;
   type: string;
   created_at: string;
-  profiles: { username: string; avatar_url: string | null } | null;
+  profiles: { username: string; avatar_url: string | null; user_type: string } | null;
 }
 
 interface EventItem {
@@ -52,7 +52,8 @@ const Index = () => {
         .limit(12),
       supabase
         .from("content")
-        .select("id, title, url, type, created_at, profiles(username, avatar_url)")
+        .select("id, title, url, type, created_at, profiles!inner(username, avatar_url, user_type)")
+        .eq("profiles.user_type", "banda")
         .order("created_at", { ascending: false })
         .limit(12),
       supabase
