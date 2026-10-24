@@ -359,26 +359,77 @@ const AdminPanel = () => {
   };
 
   const addBandManually = async () => {
-    if (!newUsername || !newEmail || !newPassword) return;
+    const username = newUsername.trim();
+    const email = newEmail.trim();
+    if (!username || !email || !newPassword) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha o nome da banda, o e-mail e a senha.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast({
+        title: "Senha muito curta",
+        description: "A senha precisa ter pelo menos 8 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setAddingBand(true);
     try {
-      const { data } = await supabase.functions.invoke("admin-setup", {
-        body: { action: "create-admin", email: newEmail, password: newPassword, username: newUsername, role: "user" },
+      const { data, error: invokeError } = await supabase.functions.invoke("admin-setup", {
+        body: {
+          action: "create-user",
+          email,
+          password: newPassword,
+          username,
+          role: "user",
+          genre: newGenre,
+          estado: newEstado,
+          bio: newBio,
+          avatar_url: newAvatarUrl.trim(),
+        },
       });
-      if (data?.error) throw new Error(data.error);
-      if (data?.user_id) {
-        // Update profile with extra fields
-        await supabase.from("profiles").update({
-          genre: newGenre, estado: newEstado, bio: newBio, avatar_url: newAvatarUrl, user_type: "banda",
-        }).eq("id", data.user_id);
+
+      if (invokeError) {
+        let message = invokeError.message || "Não foi possível chamar o serviço de cadastro.";
+        const context = (invokeError as any).context;
+        if (context && typeof context.clone === "function") {
+          try {
+            const responseBody = await context.clone().json();
+            if (responseBody?.error) message = responseBody.error;
+          } catch {
+            // Mantém a mensagem original caso a resposta não seja JSON.
+          }
+        }
+        throw new Error(message);
       }
-      toast({ title: "Banda cadastrada!" });
-      setNewUsername(""); setNewEmail(""); setNewPassword(""); setNewGenre(""); setNewEstado(""); setNewBio(""); setNewAvatarUrl("");
-      loadBands(); loadAllBands();
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+
+      if (data?.error) throw new Error(data.error);
+      if (!data?.success || !data?.user_id) {
+        throw new Error("O serviço não confirmou a criação da conta. Nenhum sucesso foi informado.");
+      }
+
+      toast({ title: "Banda cadastrada!", description: "A conta já pode entrar usando o e-mail e a senha definidos." });
+      setNewUsername("");
+      setNewEmail("");
+      setNewPassword("");
+      setNewGenre("");
+      setNewEstado("");
+      setNewBio("");
+      setNewAvatarUrl("");
+      await Promise.all([loadBands(), loadAllBands()]);
+      setTab("bandas");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido ao cadastrar a banda.";
+      toast({ title: "Não foi possível cadastrar a banda", description: message, variant: "destructive" });
+    } finally {
+      setAddingBand(false);
     }
-    setAddingBand(false);
   };
 
   if (adminLoading) return <div className="flex items-center justify-center min-h-[60vh]"><p className="text-muted-foreground">Verificando permissões...</p></div>;
