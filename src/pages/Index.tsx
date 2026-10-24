@@ -27,6 +27,7 @@ interface EventItem {
   date: string;
   location: string;
   city: string;
+  image_url: string | null;
   profiles: { username: string; avatar_url: string | null } | null;
 }
 
@@ -56,7 +57,7 @@ const Index = () => {
         .limit(12),
       supabase
         .from("events")
-        .select("id, title, date, location, city, profiles(username, avatar_url)")
+        .select("id, title, date, location, city, image_url, profiles(username, avatar_url)")
         .gte("date", new Date().toISOString())
         .order("date", { ascending: true })
         .limit(3),
@@ -140,12 +141,10 @@ const Index = () => {
               return (
                 <div key={event.id} className="group relative overflow-hidden rounded-xl bg-card border border-border hover:border-primary/30 transition-colors cursor-pointer">
                   <div className="relative h-48 overflow-hidden bg-card">
-                    {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt={event.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    {event.image_url ? (
+                      <img src={event.image_url} alt={"Capa do evento " + event.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                     ) : (
-                      <div className="h-full w-full gradient-rock flex items-center justify-center">
-                        <Calendar className="h-12 w-12 text-primary-foreground" />
-                      </div>
+                      <div className="h-full w-full bg-background" aria-label="Evento sem capa" />
                     )}
                     <span className="absolute top-3 left-3 px-3 py-1 rounded text-xs font-semibold bg-primary text-primary-foreground">
                       {profile?.username || "Evento"}
