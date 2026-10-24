@@ -52,7 +52,6 @@ const BandDashboard = () => {
   const [eventCity, setEventCity] = useState("");
   const [eventUF, setEventUF] = useState("");
   const [eventImageFile, setEventImageFile] = useState<File | null>(null);
-  const [eventImageUrl, setEventImageUrl] = useState("");
   const [events, setEvents] = useState<any[]>([]);
   const [savingEvent, setSavingEvent] = useState(false);
 
@@ -186,33 +185,56 @@ const BandDashboard = () => {
   };
 
   const addEvent = async () => {
-    if (!targetId || !eventTitle || !eventDate || !eventVenue || !eventUF) return;
-    setSavingEvent(true);
-    const dateTime = eventTime ? `${eventDate}T${eventTime}:00` : `${eventDate}T00:00:00`;
-      let imageUrl = "";
+    const coverFile = eventImageFile;
+    if (!targetId || !eventTitle.trim() || !eventDate || !eventVenue.trim() || !eventUF || !coverFile) {
+      toast({
+        title: "Preencha os campos obrigatórios",
+        description: "Informe nome, data, local, estado e envie uma capa para o evento.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      if (eventImageFile) {
-        const ext = eventImageFile.name.split(".").pop();
-        const path = `events/${targetId}/${Date.now()}.${ext}`;
-        const { error: uploadErr } = await supabase.storage
-          .from("site-assets")
-          .upload(path, eventImageFile, { upsert: true });
-        if (uploadErr) {
-          toast({ title: "Erro ao enviar imagem", description: uploadErr.message, variant: "destructive" });
-          setSavingEvent(false);
-          return;
-        }
-        imageUrl = supabase.storage.from("site-assets").getPublicUrl(path).data.publicUrl;
-      }
-    const location = `${eventVenue}, ${eventCity ? eventCity + ", " : ""}${eventUF}`;
+    if (!coverFile.type.startsWith("image/") || coverFile.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Capa inválida",
+        description: "Envie um arquivo de imagem de até 5 MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingEvent(true);
+    const dateTime = eventTime ? eventDate + "T" + eventTime + ":00" : eventDate + "T00:00:00";
+    const ext = coverFile.name.split(".").pop() || "jpg";
+    const path = "events/" + targetId + "/" + Date.now() + "." + ext;
+    const { error: uploadErr } = await supabase.storage
+      .from("site-assets")
+      .upload(path, coverFile, { upsert: true });
+
+    if (uploadErr) {
+      toast({ title: "Erro ao enviar capa", description: uploadErr.message, variant: "destructive" });
+      setSavingEvent(false);
+      return;
+    }
+
+    const imageUrl = supabase.storage.from("site-assets").getPublicUrl(path).data.publicUrl;
+    const location = eventVenue + ", " + (eventCity ? eventCity + ", " : "") + eventUF;
     const { error } = await supabase
       .from("events")
-      .insert({ artist_id: targetId, title: eventTitle, date: dateTime, location, city: eventCity, image_url: imageUrl });
+      .insert({ artist_id: targetId, title: eventTitle.trim(), date: dateTime, location, city: eventCity, image_url: imageUrl });
+
     setSavingEvent(false);
     if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast({ title: "Erro ao cadastrar evento", description: error.message, variant: "destructive" });
     } else {
-      setEventTitle(""); setEventDate(""); setEventTime(""); setEventVenue(""); setEventCity(""); setEventUF("");
+      setEventTitle("");
+      setEventDate("");
+      setEventTime("");
+      setEventVenue("");
+      setEventCity("");
+      setEventUF("");
+      setEventImageFile(null);
       loadEvents();
       toast({ title: "Evento cadastrado!" });
     }
@@ -435,18 +457,6 @@ const BandDashboard = () => {
                 <option key={uf} value={uf}>{uf}</option>
               ))}
             </select>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-foreground">Foto do Evento (opcional)</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setEventImageFile(e.target.files?.[0] || null)}
-              className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-            />
-            {eventImageFile && (
-              <p className="text-xs text-muted-foreground mt-1">{eventImageFile.name}</p>
-            )}
-          </div>
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-foreground">Chave Pix</label>
@@ -623,10 +633,11 @@ const BandDashboard = () => {
               ))}
             </select>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-foreground">Foto do Evento (opcional)</label>
+            <label className="mb-1.5 block text-xs font-medium text-foreground">Capa do evento * (obrigatória)</label>
             <input
               type="file"
               accept="image/*"
+              required
               onChange={(e) => setEventImageFile(e.target.files?.[0] || null)}
               className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
             />
@@ -736,18 +747,6 @@ const BandDashboard = () => {
               <option value="">Categoria</option>
               {productCategories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-foreground">Foto do Evento (opcional)</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setEventImageFile(e.target.files?.[0] || null)}
-              className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-            />
-            {eventImageFile && (
-              <p className="text-xs text-muted-foreground mt-1">{eventImageFile.name}</p>
-            )}
-          </div>
           </div>
           <input
             type="url"
