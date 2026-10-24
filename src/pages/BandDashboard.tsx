@@ -17,8 +17,8 @@ interface ContentItem {
 }
 
 const BandDashboard = () => {
-  const { user } = useAuth();
-  const { isAdmin } = useIsAdmin();
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -83,14 +83,26 @@ const BandDashboard = () => {
   const productCategories = ["Camisetas", "Vinil / CD", "Acessórios", "Instrumentos", "Outros"];
 
   useEffect(() => {
+    // Wait for both the session and the admin role check before redirecting.
+    // Otherwise an admin opening ?bandId=... can be sent back home while
+    // isAdmin is still false during its initial load.
+    if (authLoading || adminLoading) return;
+
     if (!user) {
       navigate("/auth");
       return;
     }
-    if (!isAdminMode && user?.user_metadata?.user_type !== "banda") {
+
+    if (adminBandId && !isAdmin && user.user_metadata?.user_type !== "banda") {
       navigate("/");
       return;
     }
+
+    if (!adminBandId && user.user_metadata?.user_type !== "banda") {
+      navigate("/");
+      return;
+    }
+
     if (targetId) {
       loadProfile();
       loadContent();
@@ -99,7 +111,7 @@ const BandDashboard = () => {
       loadPaymentRequests();
       loadSitePixKey();
     }
-  }, [user, targetId, isAdmin]);
+  }, [authLoading, adminLoading, user, targetId, isAdmin, adminBandId]);
 
   const loadProfile = async () => {
     if (!targetId) return;
