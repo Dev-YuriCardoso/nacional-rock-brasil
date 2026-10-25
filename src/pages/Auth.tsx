@@ -82,24 +82,41 @@ const Auth = () => {
         });
         setIsLogin(true);
       }
-    } catch (error: any) {
-      const msg = error.message || "";
-      let description = msg;
-      if (msg.includes("Invalid login credentials")) {
+    } catch (error: unknown) {
+      const authError = error as { message?: string; code?: string; name?: string };
+      const msg = authError?.message || "";
+      const normalized = `${authError?.code || ""} ${authError?.name || ""} ${msg}`.toLowerCase();
+      let title = "Erro";
+      let description = msg || "Não foi possível concluir a solicitação.";
+
+      if (
+        normalized.includes("over_email_send_rate_limit") ||
+        normalized.includes("email rate limit") ||
+        normalized.includes("email_rate_limit")
+      ) {
+        title = "Limite de envio de e-mails do Supabase";
+        description = "O projeto está usando o remetente padrão do Supabase, limitado a 2 e-mails por hora. Para permitir mais cadastros sem esse limite, configure um SMTP próprio em Supabase > Authentication > SMTP Settings e ajuste Authentication > Rate Limits. Tentar novamente agora não libera o envio.";
+      } else if (
+        normalized.includes("over_request_rate_limit") ||
+        normalized.includes("too many requests")
+      ) {
+        title = "Limite temporário de solicitações";
+        description = "O Supabase limitou temporariamente solicitações desta rede. Esse limite é aplicado pelo serviço de autenticação, não por um temporizador do site.";
+      } else if (msg.includes("Invalid login credentials")) {
         description = "Email ou senha incorretos.";
       } else if (msg.includes("Email not confirmed")) {
         description = "Confirme seu email antes de entrar.";
-      } else if (msg.includes("email rate limit")) {
-        description = "Muitas tentativas. Aguarde alguns minutos.";
       } else if (msg.toLowerCase().includes("invalid") && msg.toLowerCase().includes("email")) {
         description = "Endereço de email inválido.";
       } else if (msg.includes("already registered")) {
         description = "Este email já está cadastrado.";
       }
+
       toast({
-        title: "Erro",
+        title,
         description,
         variant: "destructive",
+        duration: 12000,
       });
     } finally {
       setLoading(false);
