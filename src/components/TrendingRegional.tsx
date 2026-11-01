@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, MapPin, ArrowRight } from "lucide-react";
+import { TrendingUp, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeo } from "@/contexts/GeoContext";
