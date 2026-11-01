@@ -12,7 +12,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar />
-      <main className={isMobile ? "pb-36" : "ml-16 lg:ml-56 pb-24"}>
+      <main className={isMobile ? "px-0 pt-16 pb-24" : "ml-16 pb-24 lg:ml-60"}>
         {children}
       </main>
       {!isMobile && <MusicPlayer />}
