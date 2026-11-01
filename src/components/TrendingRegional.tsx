@@ -70,7 +70,7 @@ export function TrendingRegional() {
   if (!detectedState || loading || bands.length === 0) return null;
 
   return (
-    <section className="space-y-3">
+    <section className="hidden space-y-3 sm:block">
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Sua região</p>
