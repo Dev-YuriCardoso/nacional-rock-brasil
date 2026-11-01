@@ -113,7 +113,7 @@ const Index = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-4 sm:space-y-10 sm:px-6 sm:py-6 md:space-y-12 md:px-8 md:py-8">
-      <div className="flex items-end justify-between gap-3">
+      <div className="hidden items-end justify-between gap-3 sm:flex">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary sm:text-xs">Música independente brasileira</p>
           <h1 className="mt-1 font-display text-2xl leading-none text-foreground sm:text-3xl md:text-4xl">A CENA É SUA. DESCUBRA.</h1>
@@ -126,7 +126,7 @@ const Index = () => {
         </Link>
       </div>
 
-      <div className="hidden sm:block">
+      <div className="!hidden sm:!block">
         <HeroCarousel />
       </div>
 
@@ -149,7 +149,7 @@ const Index = () => {
         <AccountAccessCard />
       </div>
 
-      <div className="hidden sm:block">
+      <div className="!hidden sm:!block">
         <TrendingRegional />
       </div>
 
