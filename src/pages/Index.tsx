@@ -126,9 +126,11 @@ const Index = () => {
         </Link>
       </div>
 
-      <HeroCarousel />
+      <div className="hidden sm:block">
+        <HeroCarousel />
+      </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+      <div className="hidden grid-cols-1 gap-2 sm:grid sm:grid-cols-3 sm:gap-3">
         {quickLinks.map((item) => (
           <Link key={item.url} to={item.url} className="group flex min-h-[68px] items-center gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-primary/40 hover:bg-primary/[0.04] sm:min-h-[82px] sm:p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
@@ -143,9 +145,13 @@ const Index = () => {
         ))}
       </div>
 
-      <AccountAccessCard />
+      <div className="hidden sm:block">
+        <AccountAccessCard />
+      </div>
 
-      <TrendingRegional />
+      <div className="hidden sm:block">
+        <TrendingRegional />
+      </div>
 
       <section>
         <HomeSectionHeading
