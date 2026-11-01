@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useGeo } from "@/contexts/GeoContext";
 import heroConcert from "@/assets/hero-concert.jpg";
 
 interface Slide {
@@ -14,120 +15,124 @@ interface Slide {
 
 export function HeroCarousel() {
   const [current, setCurrent] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const { detectedState } = useGeo();
   const [slides, setSlides] = useState<Slide[]>([
     {
       image: heroConcert,
       title: "ROCK NACIONAL EM ALTA",
-      subtitle: "Descubra os melhores artistas do cenário brasileiro",
-      cta: "Explorar",
+      subtitle: "Descubra bandas independentes e novos sons do Brasil.",
+      cta: "Explorar artistas",
       link: "/artistas",
     },
   ]);
 
   useEffect(() => {
-    loadSlides();
-  }, []);
+    let cancelled = false;
+    const loadSlides = async () => {
+      const [bannerResult, featuredResult] = await Promise.all([
+        supabase.from("site_settings").select("value").eq("key", "home_banner_url").maybeSingle(),
+        supabase.from("home_featured")
+          .select("band_id, display_order, profiles(id, username, genre, banner_url, avatar_url)")
+          .order("display_order", { ascending: true })
+          .limit(5),
+      ]);
 
-  const loadSlides = async () => {
-    // Load custom banner from site_settings
-    const { data: bannerSetting } = await supabase
-      .from("site_settings")
-      .select("value")
-      .eq("key", "home_banner_url")
-      .maybeSingle();
+      if (cancelled) return;
+      const builtSlides: Slide[] = [{
+        image: bannerResult.data?.value || heroConcert,
+        title: "ROCK NACIONAL EM ALTA",
+        subtitle: detectedState
+          ? "Descubra artistas e sons que movimentam " + detectedState + "."
+          : "Descubra bandas independentes e novos sons do Brasil.",
+        cta: "Explorar artistas",
+        link: "/artistas",
+      }];
 
-    // Load featured bands
-    const { data: featured } = await supabase
-      .from("home_featured")
-      .select("band_id, display_order, profiles(id, username, genre, banner_url, avatar_url)")
-      .order("display_order", { ascending: true })
-      .limit(5);
-
-    const builtSlides: Slide[] = [];
-
-    // Main banner slide
-    builtSlides.push({
-      image: bannerSetting?.value || heroConcert,
-      title: "ROCK NACIONAL EM ALTA",
-      subtitle: "Descubra os melhores artistas do cenário brasileiro",
-      cta: "Explorar",
-      link: "/artistas",
-    });
-
-    // Featured band slides
-    if (featured) {
-      for (const item of featured) {
+      for (const item of featuredResult.data || []) {
         const profile = item.profiles as any;
-        if (profile) {
-          builtSlides.push({
-            image: profile.banner_url || profile.avatar_url || heroConcert,
-            title: profile.username?.toUpperCase() || "DESTAQUE",
-            subtitle: profile.genre || "Rock Nacional",
-            cta: "Ver Perfil",
-            link: `/artista/${profile.id}`,
-          });
-        }
+        if (!profile) continue;
+        builtSlides.push({
+          image: profile.banner_url || profile.avatar_url || heroConcert,
+          title: profile.username?.toUpperCase() || "DESTAQUE",
+          subtitle: profile.genre || "Rock independente brasileiro",
+          cta: "Conhecer banda",
+          link: "/artista/" + profile.id,
+        });
       }
-    }
+      setSlides(builtSlides);
+    };
 
-    setSlides(builtSlides);
-  };
+    loadSlides();
+    return () => { cancelled = true; };
+  }, [detectedState]);
 
   useEffect(() => {
     if (slides.length <= 1) return;
-    const timer = setInterval(() => setCurrent((c) => (c + 1) % slides.length), 5000);
-    return () => clearInterval(timer);
+    const timer = window.setInterval(() => setCurrent((value) => (value + 1) % slides.length), 6500);
+    return () => window.clearInterval(timer);
   }, [slides.length]);
 
-  const prev = () => setCurrent((c) => (c - 1 + slides.length) % slides.length);
-  const next = () => setCurrent((c) => (c + 1) % slides.length);
+  const prev = () => setCurrent((value) => (value - 1 + slides.length) % slides.length);
+  const next = () => setCurrent((value) => (value + 1) % slides.length);
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+  };
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartX.current === null) return;
+    const distance = event.changedTouches[0]?.clientX - touchStartX.current;
+    if (Math.abs(distance) > 45) distance > 0 ? prev() : next();
+    touchStartX.current = null;
+  };
+
+  const slide = slides[current] || slides[0];
 
   return (
-    <div className="relative h-[50vh] min-h-[360px] overflow-hidden rounded-xl">
-      {slides.map((slide, i) => (
-        <div
-          key={i}
-          className={`absolute inset-0 transition-opacity duration-700 ${
-            i === current ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <img src={slide.image} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-          <div className="absolute bottom-12 left-8 right-8 animate-slide-up">
-            <h2 className="font-display text-4xl md:text-6xl text-foreground mb-2">
-              {slide.title}
-            </h2>
-            <p className="text-muted-foreground text-lg mb-4">{slide.subtitle}</p>
-            <Link
-              to={slide.link}
-              className="inline-block gradient-rock px-6 py-2.5 rounded-full font-semibold text-primary-foreground text-sm hover:opacity-90 transition-opacity glow-red"
-            >
-              {slide.cta}
+    <section
+      aria-label="Destaques do rock brasileiro"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="relative h-[min(54svh,440px)] min-h-[300px] overflow-hidden rounded-2xl border border-border bg-card md:h-[460px] md:min-h-0"
+    >
+      {slides.map((item, index) => (
+        <div key={item.link + index} className={`absolute inset-0 transition-opacity duration-700 ${index === current ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+          <img src={item.image} alt="" className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/55 to-background/5" />
+          <div className="absolute inset-x-4 bottom-10 max-w-2xl sm:inset-x-7 sm:bottom-12 md:inset-x-10 md:bottom-14">
+            <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-primary sm:text-xs">
+              <MapPin className="h-3.5 w-3.5" /> {detectedState ? "CENA LOCAL · " + detectedState : "CENA INDEPENDENTE"}
+            </p>
+            <h1 className="font-display text-3xl leading-[0.95] tracking-wide text-foreground sm:text-4xl md:text-6xl">{item.title}</h1>
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-foreground/75 sm:text-base md:text-lg">{item.subtitle}</p>
+            <Link to={item.link} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full gradient-rock px-5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:scale-[1.02]">
+              {item.cta} <ChevronRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
         </div>
       ))}
+
       {slides.length > 1 && (
         <>
-          <button onClick={prev} className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/50 flex items-center justify-center text-foreground hover:bg-background/80 transition-colors">
+          <button aria-label="Destaque anterior" onClick={prev} className="absolute left-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur sm:flex">
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <button onClick={next} className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/50 flex items-center justify-center text-foreground hover:bg-background/80 transition-colors">
+          <button aria-label="Próximo destaque" onClick={next} className="absolute right-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur sm:flex">
             <ChevronRight className="h-5 w-5" />
           </button>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-            {slides.map((_, i) => (
+          <div className="absolute bottom-4 right-4 flex items-center gap-1.5 sm:right-7">
+            {slides.map((item, index) => (
               <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === current ? "w-8 bg-primary" : "w-4 bg-muted-foreground/40"
-                }`}
+                key={item.link + index}
+                aria-label={"Ir para destaque " + (index + 1)}
+                aria-current={index === current}
+                onClick={() => setCurrent(index)}
+                className={`h-1.5 rounded-full transition-all ${index === current ? "w-7 bg-primary" : "w-2 bg-white/50"}`}
               />
             ))}
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 }
