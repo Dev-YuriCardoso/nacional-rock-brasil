@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Guitar, Music, Headphones } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,16 +13,28 @@ const genres = [
 ];
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isLogin, setIsLogin] = useState(() => searchParams.get("mode") !== "signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
-  const [userType, setUserType] = useState<"fã" | "banda">("fã");
+  const [userType, setUserType] = useState<"fã" | "banda">(() => searchParams.get("type") === "banda" ? "banda" : "fã");
   const [genre, setGenre] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const requestedType = searchParams.get("type");
+  const isBandEntry = requestedType === "banda";
+  const switchAuthMode = () => {
+    const nextIsLogin = !isLogin;
+    setIsLogin(nextIsLogin);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.set("mode", nextIsLogin ? "login" : "signup");
+      return next;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,9 +42,9 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/");
+        navigate(data.user?.user_metadata?.user_type === "banda" ? "/dashboard" : "/");
       } else {
         if (!acceptedTerms) {
           toast({
@@ -159,10 +171,10 @@ const Auth = () => {
 
           <div className="text-center lg:text-left">
             <h1 className="font-display text-3xl text-foreground">
-              {isLogin ? "BEM-VINDO DE VOLTA" : "JUNTE-SE À CENA"}
+              {isLogin ? (isBandEntry ? "ACESSO DA BANDA" : requestedType ? "ENTRAR COMO FÃ" : "BEM-VINDO DE VOLTA") : "JUNTE-SE À CENA"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {isLogin ? "Entre na sua conta" : "Crie sua conta e faça parte"}
+              {isLogin ? (isBandEntry ? "Entre para acessar o painel do seu projeto musical" : requestedType ? "Entre para seguir artistas e acompanhar a cena" : "Acesse sua conta e continue de onde parou") : "Crie sua conta e faça parte"}
             </p>
           </div>
 
@@ -295,7 +307,7 @@ const Auth = () => {
               {isLogin ? "Não tem conta? " : "Já tem conta? "}
               <button
                 type="button"
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={switchAuthMode}
                 className="text-primary hover:underline font-medium"
               >
                 {isLogin ? "Cadastre-se" : "Entrar"}
