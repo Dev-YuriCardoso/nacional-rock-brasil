@@ -86,8 +86,6 @@ export function HeroCarousel() {
     touchStartX.current = null;
   };
 
-  const slide = slides[current] || slides[0];
-
   return (
     <section
       aria-label="Destaques do rock brasileiro"
