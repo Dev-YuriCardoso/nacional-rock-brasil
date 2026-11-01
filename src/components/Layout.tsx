@@ -1,4 +1,5 @@
 import { AppSidebar } from "./AppSidebar";
+import { DesktopAccountBar } from "./DesktopAccountBar";
 import { MusicPlayer } from "./MusicPlayer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -14,9 +15,10 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar />
+      {!isMobile && <DesktopAccountBar />}
       <main className={isMobile
         ? currentTrack ? "px-0 pt-16 pb-40" : "px-0 pt-16 pb-24"
-        : "ml-16 pb-24 lg:ml-60"
+        : "ml-16 pt-[68px] pb-24 lg:ml-60"
       }>
         {children}
       </main>
