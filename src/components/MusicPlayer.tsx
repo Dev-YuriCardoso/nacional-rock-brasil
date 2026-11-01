@@ -11,17 +11,8 @@ function formatTime(ms: number): string {
 
 export function MusicPlayer() {
   const {
-    currentTrack,
-    isPlaying,
-    progress,
-    currentTime,
-    duration,
-    volume,
-    toggle,
-    seekTo,
-    setVolumeTo,
-    skipNext,
-    skipPrev,
+    currentTrack, isPlaying, progress, currentTime, duration, volume,
+    toggle, seekTo, setVolumeTo, skipNext, skipPrev,
   } = usePlayer();
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -37,90 +28,81 @@ export function MusicPlayer() {
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-50 flex h-20 items-center border-t border-border bg-player px-4">
-      {/* Track Info */}
-      <div className="flex items-center gap-3 w-1/4 min-w-0">
-        {currentTrack?.artworkUrl ? (
-          <img
-            src={currentTrack.artworkUrl}
-            alt="Album"
-            className="h-12 w-12 rounded object-cover"
-          />
-        ) : (
-          <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
-            <Music className="h-5 w-5 text-muted-foreground" />
+    <>
+      {currentTrack && (
+        <div className="fixed inset-x-2 bottom-[calc(60px+env(safe-area-inset-bottom))] z-40 overflow-hidden rounded-xl border border-border bg-card/95 shadow-2xl backdrop-blur-xl md:hidden">
+          <div className="flex h-[58px] items-center gap-2.5 px-2.5">
+            {currentTrack.artworkUrl ? (
+              <img src={currentTrack.artworkUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                <Music className="h-5 w-5 text-primary" />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-semibold text-foreground">{currentTrack.title}</p>
+              <p className="truncate text-[10px] text-muted-foreground">{currentTrack.artist}</p>
+            </div>
+            <button onClick={skipPrev} aria-label="Faixa anterior" className="flex h-9 w-8 items-center justify-center text-muted-foreground">
+              <SkipBack className="h-4 w-4" />
+            </button>
+            <button onClick={toggle} aria-label={isPlaying ? "Pausar" : "Reproduzir"} className="flex h-10 w-10 items-center justify-center rounded-full gradient-rock text-primary-foreground">
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="ml-0.5 h-4 w-4" />}
+            </button>
+            <button onClick={skipNext} aria-label="Próxima faixa" className="flex h-9 w-8 items-center justify-center text-muted-foreground">
+              <SkipForward className="h-4 w-4" />
+            </button>
           </div>
-        )}
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-foreground">
-            {currentTrack?.title || "Nenhuma faixa"}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {currentTrack?.artist || "—"}
-          </p>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="flex flex-1 flex-col items-center gap-1">
-        <div className="flex items-center gap-4">
-          <button className="text-muted-foreground hover:text-foreground transition-colors">
-            <Shuffle className="h-4 w-4" />
-          </button>
-          <button onClick={skipPrev} className="text-foreground hover:text-primary transition-colors">
-            <SkipBack className="h-5 w-5" />
-          </button>
-          <button
-            onClick={toggle}
-            className="flex h-9 w-9 items-center justify-center rounded-full gradient-rock text-primary-foreground hover:opacity-90 transition-opacity"
-          >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
-          </button>
-          <button onClick={skipNext} className="text-foreground hover:text-primary transition-colors">
-            <SkipForward className="h-5 w-5" />
-          </button>
-          <button className="text-muted-foreground hover:text-foreground transition-colors">
-            <Repeat className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="flex w-full max-w-md items-center gap-2">
-          <span className="text-[10px] text-muted-foreground w-8 text-right">
-            {formatTime(currentTime)}
-          </span>
-          <div
-            className="relative h-1 flex-1 rounded-full bg-secondary cursor-pointer group"
-            onClick={handleSeek}
-          >
-            <div
-              className="absolute left-0 top-0 h-full rounded-full bg-primary transition-all"
-              style={{ width: `${progress}%` }}
-            />
-            <div
-              className="absolute top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ left: `${progress}%`, transform: `translate(-50%, -50%)` }}
-            />
+          <div className="h-0.5 w-full bg-secondary">
+            <div className="h-full bg-primary transition-[width]" style={{ width: `${progress}%` }} />
           </div>
-          <span className="text-[10px] text-muted-foreground w-8">
-            {formatTime(duration)}
-          </span>
         </div>
-      </div>
+      )}
 
-      {/* Volume */}
-      <div className="hidden sm:flex items-center gap-2 w-1/4 justify-end">
-        <button onClick={() => setVolumeTo(volume > 0 ? 0 : 75)} className="text-muted-foreground hover:text-foreground transition-colors">
-          {volume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-        </button>
-        <div
-          className="relative h-1 w-24 rounded-full bg-secondary cursor-pointer"
-          onClick={handleVolume}
-        >
-          <div
-            className="absolute left-0 top-0 h-full rounded-full bg-foreground"
-            style={{ width: `${volume}%` }}
-          />
+      <footer className="fixed bottom-0 left-16 right-0 z-50 hidden h-20 items-center border-t border-border bg-player px-4 md:flex lg:left-60">
+        <div className="flex w-1/4 min-w-0 items-center gap-3">
+          {currentTrack?.artworkUrl ? (
+            <img src={currentTrack.artworkUrl} alt="" className="h-12 w-12 rounded object-cover" />
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded bg-muted">
+              <Music className="h-5 w-5 text-muted-foreground" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-foreground">{currentTrack?.title || "Nenhuma faixa"}</p>
+            <p className="truncate text-xs text-muted-foreground">{currentTrack?.artist || "—"}</p>
+          </div>
         </div>
-      </div>
-    </footer>
+
+        <div className="flex flex-1 flex-col items-center gap-1">
+          <div className="flex items-center gap-4">
+            <button aria-label="Aleatório" className="text-muted-foreground hover:text-foreground"><Shuffle className="h-4 w-4" /></button>
+            <button onClick={skipPrev} aria-label="Faixa anterior" className="text-foreground hover:text-primary"><SkipBack className="h-5 w-5" /></button>
+            <button onClick={toggle} aria-label={isPlaying ? "Pausar" : "Reproduzir"} className="flex h-9 w-9 items-center justify-center rounded-full gradient-rock text-primary-foreground hover:opacity-90">
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="ml-0.5 h-4 w-4" />}
+            </button>
+            <button onClick={skipNext} aria-label="Próxima faixa" className="text-foreground hover:text-primary"><SkipForward className="h-5 w-5" /></button>
+            <button aria-label="Repetir" className="text-muted-foreground hover:text-foreground"><Repeat className="h-4 w-4" /></button>
+          </div>
+          <div className="flex w-full max-w-md items-center gap-2">
+            <span className="w-8 text-right text-[10px] text-muted-foreground">{formatTime(currentTime)}</span>
+            <div role="slider" aria-label="Progresso da faixa" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)} tabIndex={0} className="group relative h-1 flex-1 cursor-pointer rounded-full bg-secondary" onClick={handleSeek}>
+              <div className="absolute left-0 top-0 h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+              <div className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-foreground opacity-0 transition-opacity group-hover:opacity-100" style={{ left: `${progress}%`, transform: "translate(-50%, -50%)" }} />
+            </div>
+            <span className="w-8 text-[10px] text-muted-foreground">{formatTime(duration)}</span>
+          </div>
+        </div>
+
+        <div className="hidden w-1/4 items-center justify-end gap-2 sm:flex">
+          <button onClick={() => setVolumeTo(volume > 0 ? 0 : 75)} aria-label={volume === 0 ? "Ativar volume" : "Silenciar"} className="text-muted-foreground hover:text-foreground">
+            {volume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
+          <div role="slider" aria-label="Volume" aria-valuemin={0} aria-valuemax={100} aria-valuenow={volume} tabIndex={0} className="relative h-1 w-24 cursor-pointer rounded-full bg-secondary" onClick={handleVolume}>
+            <div className="absolute left-0 top-0 h-full rounded-full bg-foreground" style={{ width: `${volume}%` }} />
+          </div>
+        </div>
+      </footer>
+    </>
   );
 }
