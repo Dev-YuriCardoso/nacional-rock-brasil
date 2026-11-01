@@ -80,10 +80,11 @@ export function HeroCarousel() {
     touchStartX.current = event.touches[0]?.clientX ?? null;
   };
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
-    if (touchStartX.current === null) return;
+    const startX = touchStartX.current;
+    if (startX === null) return;
     const touch = event.changedTouches[0];
     if (!touch) return;
-    const distance = touch.clientX - touchStartX.current;
+    const distance = touch.clientX - startX;
     if (Math.abs(distance) > 45) distance > 0 ? prev() : next();
     touchStartX.current = null;
   };
