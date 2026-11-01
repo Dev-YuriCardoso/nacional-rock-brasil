@@ -199,7 +199,14 @@ const Auth = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
-                      onClick={() => setUserType("fã")}
+                      onClick={() => {
+                        setUserType("fã");
+                        setSearchParams((current) => {
+                          const next = new URLSearchParams(current);
+                          next.set("type", "fan");
+                          return next;
+                        });
+                      }}
                       className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium transition-all ${
                         userType === "fã"
                           ? "border-primary bg-primary/10 text-primary glow-red"
@@ -211,7 +218,14 @@ const Auth = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setUserType("banda")}
+                      onClick={() => {
+                        setUserType("banda");
+                        setSearchParams((current) => {
+                          const next = new URLSearchParams(current);
+                          next.set("type", "banda");
+                          return next;
+                        });
+                      }}
                       className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium transition-all ${
                         userType === "banda"
                           ? "border-primary bg-primary/10 text-primary glow-red"
