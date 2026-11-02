@@ -94,7 +94,7 @@ export function HeroCarousel() {
       aria-label="Destaques do rock brasileiro"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="hidden relative h-[min(54svh,440px)] min-h-[300px] overflow-hidden rounded-2xl border border-border bg-card sm:block md:h-[460px] md:min-h-0"
+      className="max-sm:hidden relative h-[min(54svh,440px)] min-h-[300px] overflow-hidden rounded-2xl border border-border bg-card sm:block md:h-[460px] md:min-h-0"
     >
       {slides.map((item, index) => (
         <div key={item.link + index} className={`absolute inset-0 transition-opacity duration-700 ${index === current ? "opacity-100" : "pointer-events-none opacity-0"}`}>
