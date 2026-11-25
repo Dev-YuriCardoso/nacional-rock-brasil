@@ -16,7 +16,7 @@ const genres = [
   "Hard Rock", "Alternative", "Metal",
 ];
 
-type Tab = "bandas" | "curadoria" | "adicionar" | "pagamentos" | "chat";
+type Tab = "bandas" | "curadoria" | "adicionar" | "pagamentos" | "chat" | "demo";
 
 interface Band {
   id: string;
@@ -25,6 +25,7 @@ interface Band {
   estado: string | null;
   avatar_url: string | null;
   is_suspended: boolean;
+  is_demo: boolean;
   user_type: string;
 }
 
@@ -47,6 +48,8 @@ const AdminPanel = () => {
   const [bands, setBands] = useState<Band[]>([]);
   const [searchBand, setSearchBand] = useState("");
   const [loadingBands, setLoadingBands] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [demoCounts, setDemoCounts] = useState({ bands: 0, classifieds: 0, products: 0 });
 
   // Featured state
   const [featured, setFeatured] = useState<FeaturedItem[]>([]);
@@ -101,16 +104,108 @@ const AdminPanel = () => {
       loadPaymentRequests();
       loadSitePixKey();
       loadChatRooms();
+      loadDemoCounts();
     }
   }, [isAdmin]);
 
   const loadBands = async () => {
     setLoadingBands(true);
-    let query = supabase.from("profiles").select("id, username, genre, estado, avatar_url, is_suspended, user_type").eq("user_type", "banda");
+    let query = supabase.from("profiles").select("id, username, genre, estado, avatar_url, is_suspended, user_type, is_demo").eq("user_type", "banda");
     if (searchBand) query = query.ilike("username", `%${searchBand}%`);
     const { data } = await query.order("created_at", { ascending: false });
     setBands((data as Band[]) || []);
     setLoadingBands(false);
+  };
+
+  const loadDemoCounts = async () => {
+    const { data: demoProfiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("is_demo", true);
+    if (profileError) {
+      toast({ title: "Não foi possível consultar os dados de teste", description: profileError.message, variant: "destructive" });
+      return;
+    }
+
+    const ids = (demoProfiles || []).map((profile) => profile.id);
+    if (ids.length === 0) {
+      setDemoCounts({ bands: 0, classifieds: 0, products: 0 });
+      return;
+    }
+
+    const [classifiedsResult, productsResult] = await Promise.all([
+      supabase.from("classifieds").select("id", { count: "exact", head: true }).in("user_id", ids),
+      supabase.from("products").select("id", { count: "exact", head: true }).in("owner_id", ids),
+    ]);
+
+    if (classifiedsResult.error || productsResult.error) {
+      toast({
+        title: "Não foi possível consultar todos os dados de teste",
+        description: classifiedsResult.error?.message || productsResult.error?.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setDemoCounts({
+      bands: ids.length,
+      classifieds: classifiedsResult.count || 0,
+      products: productsResult.count || 0,
+    });
+  };
+
+  const seedDemoData = async () => {
+    setDemoBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-setup", {
+        body: { action: "seed-demo" },
+      });
+      if (error || data?.error || !data?.success) {
+        throw new Error(data?.error || error?.message || "O servidor não confirmou a criação dos dados demonstrativos.");
+      }
+
+      toast({
+        title: "Dados demonstrativos criados",
+        description: `${data.bands_created} bandas, ${data.classifieds_created} classificados e ${data.products_created} produtos de teste foram adicionados.`,
+      });
+      await Promise.all([loadDemoCounts(), loadBands(), loadAllBands()]);
+    } catch (err: unknown) {
+      toast({
+        title: "Não foi possível criar os dados de teste",
+        description: err instanceof Error ? err.message : "Erro inesperado.",
+        variant: "destructive",
+      });
+    } finally {
+      setDemoBusy(false);
+    }
+  };
+
+  const deleteDemoData = async () => {
+    if (!confirm("Remover todos os perfis, classificados e produtos identificados como DEMO/TESTE? Contas e conteúdos reais não serão afetados.")) return;
+
+    setDemoBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-setup", {
+        body: { action: "delete-demo" },
+      });
+      if (error || data?.error || !data?.success) {
+        throw new Error(data?.error || error?.message || "O servidor não confirmou a remoção dos dados de teste.");
+      }
+
+      toast({
+        title: "Dados de teste removidos",
+        description: `${data.bands_deleted} perfis, ${data.classifieds_deleted} classificados e ${data.products_deleted} produtos removidos.`,
+      });
+      await Promise.all([loadDemoCounts(), loadBands(), loadAllBands()]);
+    } catch (err: unknown) {
+      toast({
+        title: "Não foi possível remover os dados de teste",
+        description: err instanceof Error ? err.message : "Erro inesperado.",
+        variant: "destructive",
+      });
+    } finally {
+      setDemoBusy(false);
+    }
   };
 
   const loadAllBands = async () => {
@@ -452,18 +547,19 @@ const AdminPanel = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border">
+      <div className="flex gap-1 overflow-x-auto border-b border-border">
         {([
           { id: "bandas" as Tab, label: "Bandas", icon: Users },
           { id: "curadoria" as Tab, label: "Curadoria", icon: Star },
           { id: "pagamentos" as Tab, label: "Pagamentos", icon: CreditCard },
           { id: "chat" as Tab, label: "Monitoramento", icon: MessageCircle },
+          { id: "demo" as Tab, label: "Dados de teste", icon: Eye },
           { id: "adicionar" as Tab, label: "Adicionar Banda", icon: Plus },
         ]).map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium transition-colors relative ${
+            className={`flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium transition-colors relative ${
               tab === id ? "text-primary" : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -473,6 +569,59 @@ const AdminPanel = () => {
           </button>
         ))}
       </div>
+
+      {/* TAB: Dados demonstrativos */}
+      {tab === "demo" && (
+        <div className="space-y-5">
+          <section className="rounded-xl border border-border bg-card p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              <h2 className="font-display text-xl text-foreground">DADOS DEMONSTRATIVOS</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Cria perfis fictícios de bandas brasileiras, anúncios de classificados e produtos de loja para visualizar o site com conteúdo.
+              Todos os registros ficam identificados como DEMO ou TESTE e usam contas automáticas sem acesso de login divulgado.
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-lg border border-border bg-background p-3">
+                <p className="text-2xl font-bold text-foreground">{demoCounts.bands}</p>
+                <p className="text-xs text-muted-foreground">Perfis de bandas</p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-3">
+                <p className="text-2xl font-bold text-foreground">{demoCounts.classifieds}</p>
+                <p className="text-xs text-muted-foreground">Classificados</p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-3">
+                <p className="text-2xl font-bold text-foreground">{demoCounts.products}</p>
+                <p className="text-xs text-muted-foreground">Produtos</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 pt-2">
+              <button
+                type="button"
+                onClick={seedDemoData}
+                disabled={demoBusy}
+                className="flex h-10 items-center gap-2 rounded-lg gradient-rock px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                {demoBusy ? "Processando..." : "Criar / atualizar dados de teste"}
+              </button>
+              <button
+                type="button"
+                onClick={deleteDemoData}
+                disabled={demoBusy || (demoCounts.bands === 0 && demoCounts.classifieds === 0 && demoCounts.products === 0)}
+                className="flex h-10 items-center gap-2 rounded-lg border border-destructive/40 px-5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-40"
+              >
+                <Trash2 className="h-4 w-4" />
+                Remover todos os dados de teste
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              A remoção é feita em conjunto por um único botão e alcança somente contas com a marca interna de demonstração. Perfis reais e seus conteúdos não são selecionados.
+            </p>
+          </section>
+        </div>
+      )}
 
       {/* TAB: Bandas */}
       {tab === "bandas" && (
@@ -526,6 +675,7 @@ const AdminPanel = () => {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
                     {band.username}
+                    {band.is_demo && <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">DEMO</span>}
                     {band.is_suspended && <span className="ml-2 text-xs text-destructive">(Suspensa)</span>}
                   </p>
                   <p className="text-xs text-muted-foreground">{[band.genre, band.estado].filter(Boolean).join(" • ") || "Sem info"}</p>
