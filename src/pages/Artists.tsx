@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, Calendar } from "lucide-react";
+import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { events } from "@/data/mockData";
 
 const genreFilters = [
   "Todos", "Metal", "Death Metal", "Thrash Metal", "Black Metal",
@@ -160,35 +159,6 @@ const Artists = () => {
         </div>
       )}
 
-      {/* Upcoming Events */}
-      <section className="pt-4">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            <h2 className="font-display text-xl md:text-3xl text-foreground">EVENTOS</h2>
-          </div>
-          <Link to="/eventos" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            Ver todos →
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {events.slice(0, 3).map((event) => (
-            <div key={event.id} className="group relative overflow-hidden rounded-xl bg-card border border-border hover:border-primary/30 transition-colors cursor-pointer">
-              <div className="relative h-40 md:h-48 overflow-hidden">
-                <img src={event.image} alt={event.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                <span className="absolute top-3 left-3 px-3 py-1 rounded text-xs font-semibold bg-primary text-primary-foreground">
-                  Comprar ingresso
-                </span>
-              </div>
-              <div className="p-3 md:p-4">
-                <p className="text-xs text-muted-foreground mb-1">{event.date}</p>
-                <h3 className="font-display text-lg md:text-xl text-foreground">{event.title}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{event.location}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 };
