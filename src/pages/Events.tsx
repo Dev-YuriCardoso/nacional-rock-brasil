@@ -44,7 +44,8 @@ const Events = () => {
   const loadEvents = async () => {
     const { data } = await supabase
       .from("events")
-      .select("id, title, date, location, city, artist_id, image_url, profiles(username, avatar_url)")
+      .select("id, title, date, location, city, artist_id, image_url, profiles!inner(username, avatar_url, is_demo)")
+      .eq("profiles.is_demo", false)
       .gte("date", new Date().toISOString())
       .order("date", { ascending: true });
     setEvents((data as any) || []);
