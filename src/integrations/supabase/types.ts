@@ -452,6 +452,7 @@ export type Database = {
           estado: string | null
           genre: string | null
           id: string
+          is_demo: boolean
           is_suspended: boolean
           pix_link: string | null
           pix_qrcode_url: string | null
@@ -471,6 +472,7 @@ export type Database = {
           estado?: string | null
           genre?: string | null
           id: string
+          is_demo?: boolean
           is_suspended?: boolean
           pix_link?: string | null
           pix_qrcode_url?: string | null
