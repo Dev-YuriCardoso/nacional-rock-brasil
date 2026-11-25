@@ -66,8 +66,6 @@ async function cleanupDemoData(admin: any) {
   await deleteIds(admin, "comments", "user_id", ids);
   await deleteIds(admin, "follows", "follower_id", ids);
   await deleteIds(admin, "follows", "following_id", ids);
-  await deleteIds(admin, "classifies", "user_id", []);
-  await deleteIds(admin, "classifIeds", "user_id", []);
   await deleteIds(admin, "classifieds", "user_id", ids);
   await deleteIds(admin, "payment_requests", "band_id", ids);
   await deleteIds(admin, "payment_requests", "reviewed_by", ids);
