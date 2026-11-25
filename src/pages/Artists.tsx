@@ -32,7 +32,8 @@ const Artists = () => {
     let query = supabase
       .from("profiles")
       .select("id, username, avatar_url, genre, subgenre, estado")
-      .eq("user_type", "banda");
+      .eq("user_type", "banda")
+      .eq("is_demo", false);
 
     if (activeFilter !== "Todos") {
       if (activeFilter === "Metal") {
