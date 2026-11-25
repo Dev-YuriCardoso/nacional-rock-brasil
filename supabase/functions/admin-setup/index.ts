@@ -281,6 +281,7 @@ Deno.serve(async (req) => {
           console.error("Falha ao reverter criação demonstrativa:", cleanupError);
         }
         for (const id of createdIds) {
+          await supabaseAdmin.from("profiles").delete().eq("id", id);
           await supabaseAdmin.auth.admin.deleteUser(id);
         }
         throw seedError;
