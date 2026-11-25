@@ -48,10 +48,10 @@ export function SmartPlayer({ type, embedUrl, title, artistName }: SmartPlayerPr
       const SC = (window as any).SC;
       if (!SC?.Widget || !iframeRef.current) return;
       widget = SC.Widget(iframeRef.current);
+      player.widgetRef.current = widget;
 
       widget.bind(SC.Widget.Events.PLAY, () => {
         player.setIsPlaying(true);
-        player.widgetRef.current = widget;
         widget.getCurrentSound((sound: any) => {
           player.setCurrentTrack({
             title: sound?.title || title,
