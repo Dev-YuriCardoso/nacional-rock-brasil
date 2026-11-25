@@ -84,12 +84,14 @@ const Index = () => {
           .select("id, username, avatar_url, genre")
           .eq("user_type", "banda")
           .eq("is_suspended", false)
+          .eq("is_demo", false)
           .order("created_at", { ascending: false })
           .limit(12),
         supabase
           .from("content")
-          .select("id, title, url, type, created_at, profiles!inner(username, avatar_url, user_type)")
+          .select("id, title, url, type, created_at, profiles!inner(username, avatar_url, user_type, is_demo)")
           .eq("profiles.user_type", "banda")
+          .eq("profiles.is_demo", false)
           .order("created_at", { ascending: false })
           .limit(12),
         supabase
