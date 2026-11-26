@@ -20,7 +20,7 @@ interface ContentItem {
   url: string;
   type: string;
   created_at: string;
-  profiles: { username: string; avatar_url: string | null; user_type: string } | null;
+  profiles: { id: string; username: string; avatar_url: string | null; user_type: string } | null;
 }
 
 interface EventItem {
@@ -89,7 +89,7 @@ const Index = () => {
           .limit(12),
         supabase
           .from("content")
-          .select("id, title, url, type, created_at, profiles!inner(username, avatar_url, user_type, is_demo)")
+          .select("id, title, url, type, created_at, profiles!inner(id, username, avatar_url, user_type, is_demo)")
           .eq("profiles.user_type", "banda")
           .eq("profiles.is_demo", false)
           .order("created_at", { ascending: false })
@@ -177,7 +177,7 @@ const Index = () => {
             {newContent.map((item) => {
               const profile = item.profiles;
               return (
-                <a key={item.id} href={item.url} target="_blank" rel="noreferrer" className="group w-[146px] shrink-0 snap-start sm:w-auto">
+                <Link key={item.id} to={profile?.id ? "/artista/" + profile.id : "/artistas"} className="group w-[146px] shrink-0 snap-start sm:w-auto">
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-card shadow-sm">
                     {profile?.avatar_url ? (
                       <img src={profile.avatar_url} alt={profile.username} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -197,7 +197,7 @@ const Index = () => {
                   </div>
                   <h3 className="mt-2 truncate text-xs font-semibold text-foreground group-hover:text-primary sm:text-sm">{item.title}</h3>
                   <p className="truncate text-[10px] text-muted-foreground sm:text-xs">{profile?.username || "Artista"}</p>
-                </a>
+                </Link>
               );
             })}
           </div>
