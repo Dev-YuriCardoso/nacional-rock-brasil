@@ -92,7 +92,7 @@ async function cleanupDemoData(admin: any) {
 const demoBands = [
   {
     slug: "mare-de-ruido",
-    username: "Maré de Ruído (DEMO)",
+    username: "Maré de Ruído",
     genre: "Punk",
     estado: "BA",
     bio: "Banda fictícia de punk rock de Salvador, Bahia. Perfil demonstrativo para testar páginas de artistas, catálogo e navegação. Não representa uma banda real.",
@@ -100,7 +100,7 @@ const demoBands = [
   },
   {
     slug: "aurora-de-concreto",
-    username: "Aurora de Concreto (DEMO)",
+    username: "Aurora de Concreto",
     genre: "Alternative",
     estado: "SP",
     bio: "Projeto fictício de rock alternativo de São Paulo. Perfil demonstrativo para visualização de informações, imagens e identidade de bandas.",
@@ -108,7 +108,7 @@ const demoBands = [
   },
   {
     slug: "vertice-sombria",
-    username: "Vértice Sombria (DEMO)",
+    username: "Vértice Sombria",
     genre: "Goth",
     estado: "PE",
     bio: "Banda fictícia de sonoridade gótica de Recife, Pernambuco. Conta de teste, sem agenda ou lançamentos reais.",
@@ -116,7 +116,7 @@ const demoBands = [
   },
   {
     slug: "serra-eletrica",
-    username: "Serra Elétrica (DEMO)",
+    username: "Serra Elétrica",
     genre: "Hard Rock",
     estado: "MG",
     bio: "Banda fictícia de hard rock de Belo Horizonte, Minas Gerais. Criada exclusivamente para demonstrar os recursos da plataforma.",
@@ -124,7 +124,7 @@ const demoBands = [
   },
   {
     slug: "neon-carmim",
-    username: "Neon Carmim (DEMO)",
+    username: "Neon Carmim",
     genre: "Emo",
     estado: "RJ",
     bio: "Projeto fictício de rock emo do Rio de Janeiro. Perfil de demonstração, não representa artista ou negócio real.",
@@ -132,7 +132,7 @@ const demoBands = [
   },
   {
     slug: "ultimo-acorde",
-    username: "Último Acorde (DEMO)",
+    username: "Último Acorde",
     genre: "Metal",
     estado: "PR",
     bio: "Banda fictícia de metal de Curitiba, Paraná. Perfil criado para testar a listagem e os detalhes de artistas.",
